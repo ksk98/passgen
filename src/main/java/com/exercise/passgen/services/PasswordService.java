@@ -20,7 +20,7 @@ public class PasswordService {
     private static final char[] UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final char[] SPECIAL = "!@#$%&*()_+-=[]|,./?><".toCharArray();
 
-    private static final int minCharacters = 3, maxCharacters = 32, maxPasswordsAtOnce = 1000;
+    public static final int MIN_CHARACTERS = 3, MAX_CHARACTERS = 32, MAX_PASSWORDS_AT_ONCE = 1000;
 
     /**
      * Returns complexity of a given password.<br>
@@ -33,8 +33,8 @@ public class PasswordService {
      * </ul>
      * @param password String value of a given password
      * @return Complexity value
-     * @throws IncorrectPasswordLengthException if length was less than {@value PasswordService#minCharacters}
-     * and more than {@value PasswordService#maxCharacters}
+     * @throws IncorrectPasswordLengthException if length was less than {@value PasswordService#MIN_CHARACTERS}
+     * and more than {@value PasswordService#MAX_CHARACTERS}
      */
     public Complexity getComplexity(String password) throws IncorrectPasswordLengthException {
         int length = password.length();
@@ -67,24 +67,24 @@ public class PasswordService {
 
     /**
      * Generate a batch of passwords in form of a list.
-     * @param length length of generated passwords, (between {@value PasswordService#minCharacters} and {@value PasswordService#maxCharacters})
+     * @param length length of generated passwords, (between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS})
      * @param lowerCase if true, passwords will contain lowercase letters
      * @param upperCase if true, passwords will contain uppercase letters
      * @param specialCase if true, passwords will contain special characters
-     * @param amount amount of generated passwords (max {@value PasswordService#maxPasswordsAtOnce})
+     * @param amount amount of generated passwords (max {@value PasswordService#MAX_PASSWORDS_AT_ONCE})
      * @return list of generated passwords
-     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#minCharacters} and {@value PasswordService#maxCharacters}
+     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}
      * @throws NoCaseException when all case flags are false
-     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#maxPasswordsAtOnce}
+     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#MAX_PASSWORDS_AT_ONCE}
      */
-    private List<String> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
+    public List<String> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
             throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
         checkLengthBetweenMinMax(length);
 
         if (!lowerCase && !upperCase && !specialCase)
             throw new NoCaseException();
 
-        if (amount > maxPasswordsAtOnce)
+        if (amount > MAX_PASSWORDS_AT_ONCE)
             throw new TooManyPasswordsAtOnceException();
 
         List<String> out = new LinkedList<>();
@@ -133,7 +133,7 @@ public class PasswordService {
     }
 
     private void checkLengthBetweenMinMax(int length) throws IncorrectPasswordLengthException {
-        if (length < minCharacters || length > maxCharacters)
+        if (length < MIN_CHARACTERS || length > MAX_CHARACTERS)
             throw new IncorrectPasswordLengthException();
     }
 }
