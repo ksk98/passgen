@@ -124,7 +124,7 @@ public class PasswordService {
 
             // Randomize the rest
             for (int j = sureCaseInsertIndex; j < length; j++)
-                password[j] = characters[random.nextInt(characters.length)];
+                password[indexes.get(j)] = characters[random.nextInt(characters.length)];
 
             out.add(new String(password));
         }
