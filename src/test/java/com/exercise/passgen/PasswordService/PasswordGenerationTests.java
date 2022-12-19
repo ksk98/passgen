@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
-// Those tests should be done after testing the password validation
 @RunWith(MockitoJUnitRunner.class)
 public class PasswordGenerationTests {
     @InjectMocks
