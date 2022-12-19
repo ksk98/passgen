@@ -2,6 +2,8 @@ package com.exercise.passgen.services;
 
 import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
+import com.exercise.passgen.exceptions.NoCaseException;
+import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -18,7 +20,7 @@ public class PasswordService {
     private static final char[] UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final char[] SPECIAL = "!@#$%&*()_+-=[]|,./?><".toCharArray();
 
-    private static final int minCharacters = 3, maxCharacters = 32;
+    private static final int minCharacters = 3, maxCharacters = 32, maxPasswordsAtOnce = 1000;
 
     /**
      * Returns complexity of a given password.<br>
@@ -63,9 +65,28 @@ public class PasswordService {
         return Complexity.LOW;
     }
 
+    /**
+     * Generate a batch of passwords in form of a list.
+     * @param length length of generated passwords, (between {@value PasswordService#minCharacters} and {@value PasswordService#maxCharacters})
+     * @param lowerCase if true, passwords will contain lowercase letters
+     * @param upperCase if true, passwords will contain uppercase letters
+     * @param specialCase if true, passwords will contain special characters
+     * @param amount amount of generated passwords (max {@value PasswordService#maxPasswordsAtOnce})
+     * @return list of generated passwords
+     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#minCharacters} and {@value PasswordService#maxCharacters}
+     * @throws NoCaseException when all case flags are false
+     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#maxPasswordsAtOnce}
+     */
     private List<String> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
-            throws IncorrectPasswordLengthException {
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
         checkLengthBetweenMinMax(length);
+
+        if (!lowerCase && !upperCase && !specialCase)
+            throw new NoCaseException();
+
+        if (amount > maxPasswordsAtOnce)
+            throw new TooManyPasswordsAtOnceException();
+
         List<String> out = new LinkedList<>();
 
         StringBuilder stringBuilder = new StringBuilder();
