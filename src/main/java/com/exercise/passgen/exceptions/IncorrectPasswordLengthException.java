@@ -1,4 +1,4 @@
 package com.exercise.passgen.exceptions;
 
-public class IncorrectPasswordLengthException extends RuntimeException {
+public class IncorrectPasswordLengthException extends Exception {
 }
