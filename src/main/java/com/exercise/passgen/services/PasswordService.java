@@ -87,7 +87,7 @@ public class PasswordService {
         if (amount > MAX_PASSWORDS_AT_ONCE)
             throw new TooManyPasswordsAtOnceException();
 
-        List<String> out = new LinkedList<>();
+        List<String> out = new ArrayList<>(amount);
 
         StringBuilder stringBuilder = new StringBuilder();
         if (lowerCase) stringBuilder.append(LOWER);
