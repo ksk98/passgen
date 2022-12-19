@@ -7,10 +7,7 @@ import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
