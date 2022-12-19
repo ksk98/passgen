@@ -66,7 +66,7 @@ public class PasswordService {
     }
 
     /**
-     * Generate a batch of passwords in form of a list.
+     * Generate a batch of passwords in form of a list.<br><b>THIS METHOD DOES NOT PERSIST THE GENERATED PASSWORDS!</b>
      * @param length length of generated passwords, (between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS})
      * @param lowerCase if true, passwords will contain lowercase letters
      * @param upperCase if true, passwords will contain uppercase letters
