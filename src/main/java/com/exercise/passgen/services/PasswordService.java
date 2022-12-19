@@ -20,9 +20,23 @@ public class PasswordService {
 
     private static final int minCharacters = 3, maxCharacters = 32;
 
+    /**
+     * Returns complexity of a given password.<br>
+     * Categories go as follows:<br>
+     * <ul>
+     *     <li>LOW - up to 5 characters, no special case, only lower or only upper case</li>
+     *     <li>MEDIUM - at least 5 characters, no special case, lower or upper case</li>
+     *     <li>HIGH - at least 8 characters, at least 1 special case, both lower and upper case</li>
+     *     <li>ULTRA - at least 16 characters, at least 1 special case, both lower and upper case</li>
+     * </ul>
+     * @param password String value of a given password
+     * @return Complexity value
+     * @throws IncorrectPasswordLengthException if length was less than {@value PasswordService#minCharacters}
+     * and more than {@value PasswordService#maxCharacters}
+     */
     public Complexity getComplexity(String password) throws IncorrectPasswordLengthException {
         int length = password.length();
-        checkLength(length);
+        checkLengthBetweenMinMax(length);
 
         boolean hasLowerCase = false,
                 hasUpperCase = false,
@@ -49,7 +63,7 @@ public class PasswordService {
 
     private List<String> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
             throws IncorrectPasswordLengthException {
-        checkLength(length);
+        checkLengthBetweenMinMax(length);
         List<String> out = new LinkedList<>();
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -95,7 +109,7 @@ public class PasswordService {
         return out;
     }
 
-    private void checkLength(int length) throws IncorrectPasswordLengthException {
+    private void checkLengthBetweenMinMax(int length) throws IncorrectPasswordLengthException {
         if (length < minCharacters || length > maxCharacters)
             throw new IncorrectPasswordLengthException();
     }
