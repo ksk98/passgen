@@ -49,8 +49,22 @@ public class PasswordValidationTests {
         assertEquals(Complexity.MEDIUM, passwordService.getComplexity("SAaAaS"));
         assertEquals(Complexity.LOW, passwordService.getComplexity("SAaAa"));
 
+        // Special case doesn't change anything for this length
+        assertEquals(Complexity.MEDIUM, passwordService.getComplexity("$AaAa$"));
+
         // Lower and upper case
         assertEquals(Complexity.LOW, passwordService.getComplexity("SAAAAS"));
         assertEquals(Complexity.LOW, passwordService.getComplexity("saaaas"));
+    }
+
+    @Test
+    public void validateLowComplexity() throws IncorrectPasswordLengthException {
+        // Up to 5 characters, but more won't change anything for only lower case or only upper case
+        assertEquals(Complexity.LOW, passwordService.getComplexity("saaa"));
+        assertEquals(Complexity.LOW, passwordService.getComplexity("saaaa"));
+
+        // Special case doesn't change anything for this length and character case
+        assertEquals(Complexity.LOW, passwordService.getComplexity("$aaa"));
+        assertEquals(Complexity.LOW, passwordService.getComplexity("$aaaa"));
     }
 }
