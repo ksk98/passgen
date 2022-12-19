@@ -55,6 +55,8 @@ public class PasswordService {
                 if (length > 8) return Complexity.HIGH;
             }
 
+            // From my understanding medium complexity passwords do not contain ONLY lower or ONLY upper case
+            // So this still lands inside this IF statement
             if (length > 5) return Complexity.MEDIUM;
         }
 
