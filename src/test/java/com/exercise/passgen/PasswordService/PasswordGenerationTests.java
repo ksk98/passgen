@@ -4,7 +4,7 @@ import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
 import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
-import com.exercise.passgen.models.DTOs.PasswordDTO;
+import com.exercise.passgen.models.schemas.PasswordDTO;
 import com.exercise.passgen.services.PasswordService;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,4 +1,4 @@
-package com.exercise.passgen.models.DTOs;
+package com.exercise.passgen.models.schemas;
 
 import com.exercise.passgen.enums.Complexity;
 import lombok.Builder;
