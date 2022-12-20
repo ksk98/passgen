@@ -6,6 +6,7 @@ import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
 import com.exercise.passgen.models.schemas.PasswordDTO;
 import com.exercise.passgen.models.entities.PasswordEntity;
+import com.exercise.passgen.models.schemas.PasswordGenerationRequestDTO;
 import com.exercise.passgen.repositories.PasswordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -70,6 +71,11 @@ public class PasswordService {
         }
 
         return Complexity.LOW;
+    }
+
+    public List<PasswordDTO> generatePasswords(PasswordGenerationRequestDTO request)
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+        return generatePasswords(request.getLength(), request.isLowerCase(), request.isUpperCase(), request.isUpperCase(), request.getAmount());
     }
 
     /**
