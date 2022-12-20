@@ -89,10 +89,10 @@ public class PasswordService {
         checkLengthBetweenMinMax(length);
 
         if (!lowerCase && !upperCase && !specialCase)
-            throw new NoCaseException();
+            throw new NoCaseException("At least one case must be selected.");
 
         if (amount > MAX_PASSWORDS_AT_ONCE)
-            throw new TooManyPasswordsAtOnceException();
+            throw new TooManyPasswordsAtOnceException("Cannot request more than " + MAX_PASSWORDS_AT_ONCE + " to be generated at once.");
 
         List<PasswordDTO> out = new ArrayList<>(amount);
 
@@ -176,6 +176,6 @@ public class PasswordService {
 
     private void checkLengthBetweenMinMax(int length) throws IncorrectPasswordLengthException {
         if (length < MIN_CHARACTERS || length > MAX_CHARACTERS)
-            throw new IncorrectPasswordLengthException();
+            throw new IncorrectPasswordLengthException("Password length must be between " + MIN_CHARACTERS + " and " + MAX_CHARACTERS + ".");
     }
 }
