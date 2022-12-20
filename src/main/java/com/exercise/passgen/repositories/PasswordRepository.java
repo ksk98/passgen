@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PasswordRepository extends JpaRepository<PasswordEntity, Long> {
     boolean existsByPasswordHash(String passwordHash);
+    PasswordEntity findByPasswordHash(String passwordHash);
+    PasswordEntity deletePasswordByPasswordHash(String passwordHash);
 }
