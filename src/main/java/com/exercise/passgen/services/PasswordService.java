@@ -155,6 +155,32 @@ public class PasswordService {
         return out;
     }
 
+    public PasswordDTO getPasswordDTO(String password) {
+        String passwordHash = passwordEncoder.encode(password);
+        if (!passwordRepository.existsByPasswordHash(passwordHash))
+            return null;
+
+        PasswordEntity passwordEntity = passwordRepository.findByPasswordHash(passwordHash);
+        return PasswordDTO.builder()
+                .password(password)
+                .complexity(passwordEntity.getComplexity())
+                .generationDateTime(passwordEntity.getGenerationDateTime())
+                .build();
+    }
+
+    public PasswordDTO deletePassword(String password) {
+        String passwordHash = passwordEncoder.encode(password);
+        if (!passwordRepository.existsByPasswordHash(passwordHash))
+            return null;
+
+        PasswordEntity passwordEntity = passwordRepository.deletePasswordByPasswordHash(passwordHash);
+        return PasswordDTO.builder()
+                .password(password)
+                .complexity(passwordEntity.getComplexity())
+                .generationDateTime(passwordEntity.getGenerationDateTime())
+                .build();
+    }
+
     /**
      * Persists a given iterable of password DTO's.
      * @return list of duplicates that were not readded
