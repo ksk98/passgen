@@ -1,6 +1,7 @@
-package com.exercise.passgen.models;
+package com.exercise.passgen.models.entities;
 
 import com.exercise.passgen.enums.Complexity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -12,10 +13,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Data
 @Entity
-public class Password {
+public class PasswordEntity {
     @Id
     private Long id;
+    @Column(unique = true)
     private String passwordHash;
     private Complexity complexity;
-    private LocalDateTime createdOn;
+    private LocalDateTime generationDateTime;
 }
