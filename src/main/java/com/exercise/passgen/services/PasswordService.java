@@ -4,20 +4,30 @@ import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
 import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
+import com.exercise.passgen.models.DTOs.PasswordDTO;
+import com.exercise.passgen.models.entities.PasswordEntity;
+import com.exercise.passgen.repositories.PasswordRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
+@RequiredArgsConstructor
 public class PasswordService {
     private static final char[] LOWER = "abcdefghijklmnopqrstuvwxyz".toCharArray();
     private static final char[] UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final char[] SPECIAL = "!@#$%&*()_+-=[]|,./?><".toCharArray();
 
     public static final int MIN_CHARACTERS = 3, MAX_CHARACTERS = 32, MAX_PASSWORDS_AT_ONCE = 1000;
+
+    private final PasswordRepository passwordRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Returns complexity of a given password.<br>
@@ -63,18 +73,18 @@ public class PasswordService {
     }
 
     /**
-     * Generate a batch of passwords in form of a list.<br><b>THIS METHOD DOES NOT PERSIST THE GENERATED PASSWORDS!</b>
+     * Generates a batch of password DTO's packed in a list.<br><b>THIS METHOD DOES NOT PERSIST THE GENERATED PASSWORDS!</b>
      * @param length length of generated passwords, (between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS})
      * @param lowerCase if true, passwords will contain lowercase letters
      * @param upperCase if true, passwords will contain uppercase letters
      * @param specialCase if true, passwords will contain special characters
      * @param amount amount of generated passwords (max {@value PasswordService#MAX_PASSWORDS_AT_ONCE})
-     * @return list of generated passwords
+     * @return list of generated password DTO's
      * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}
      * @throws NoCaseException when all case flags are false
      * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#MAX_PASSWORDS_AT_ONCE}
      */
-    public List<String> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
+    public List<PasswordDTO> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
             throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
         checkLengthBetweenMinMax(length);
 
@@ -84,13 +94,16 @@ public class PasswordService {
         if (amount > MAX_PASSWORDS_AT_ONCE)
             throw new TooManyPasswordsAtOnceException();
 
-        List<String> out = new ArrayList<>(amount);
+        List<PasswordDTO> out = new ArrayList<>(amount);
 
         StringBuilder stringBuilder = new StringBuilder();
         if (lowerCase) stringBuilder.append(LOWER);
         if (upperCase) stringBuilder.append(UPPER);
         if (specialCase) stringBuilder.append(SPECIAL);
         char[] characters = stringBuilder.toString().toCharArray();
+
+        // This will be the same for the whole batch and will be computed along the first generated password
+        Complexity complexity = null;
 
         // We will have to ensure that at least 1 character of every specified case will be present
         // A "sure case" is a character from one of those cases that will be randomly inserted at the start of the process
@@ -123,9 +136,41 @@ public class PasswordService {
             for (int j = sureCaseInsertIndex; j < length; j++)
                 password[indexes.get(j)] = characters[random.nextInt(characters.length)];
 
-            out.add(new String(password));
+            if (complexity == null)
+                complexity = getComplexity(new String(password));
+
+            out.add(PasswordDTO.builder()
+                    .password(new String(password))
+                    .complexity(complexity)
+                    .generationDateTime(LocalDateTime.now())
+                    .build());
         }
 
+        return out;
+    }
+
+    /**
+     * Persists a given iterable of password DTO's.
+     * @return list of duplicates that were not readded
+     */
+    public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) {
+        List<PasswordDTO> out = new LinkedList<>();
+        List<PasswordEntity> in = new LinkedList<>();
+
+        for (PasswordDTO password: passwords) {
+            String passwordHash = passwordEncoder.encode(password.getPassword());
+            if (passwordRepository.existsByPasswordHash(passwordHash)) {
+                out.add(password);
+            } else {
+                in.add(PasswordEntity.builder()
+                        .complexity(password.getComplexity())
+                        .passwordHash(passwordHash)
+                        .generationDateTime(password.getGenerationDateTime())
+                        .build());
+            }
+        }
+
+        passwordRepository.saveAll(in);
         return out;
     }
 

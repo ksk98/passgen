@@ -4,6 +4,7 @@ import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
 import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
+import com.exercise.passgen.models.DTOs.PasswordDTO;
 import com.exercise.passgen.services.PasswordService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,9 +104,9 @@ public class PasswordGenerationTests {
 
     private void generateAndAssert(Complexity expected, int length, boolean lowerCase, boolean upperCase, boolean specialCase)
             throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
-        List<String> passwords = passwordService.generatePasswords(length, lowerCase, upperCase, specialCase, 1);
+        List<PasswordDTO> passwords = passwordService.generatePasswords(length, lowerCase, upperCase, specialCase, 1);
 
-        for (String password: passwords)
-            assertEquals(expected, passwordService.getComplexity(password));
+        for (PasswordDTO password: passwords)
+            assertEquals(expected, passwordService.getComplexity(password.getPassword()));
     }
 }
