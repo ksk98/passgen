@@ -215,7 +215,7 @@ public class PasswordService {
 
         for (PasswordDTO password: passwords) {
             String passwordHash = passwordEncoder.encode(password.getPassword());
-            if (passwordRepository.existsByPasswordHash(passwordHash)) {
+            if (getPasswordDTO(password.getPassword()) != null) {
                 out.add(password);
             } else {
                 if (in.containsKey(password.getPassword())) out.add(password);
