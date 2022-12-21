@@ -204,30 +204,33 @@ public class PasswordService {
     }
 
     /**
-     * Persists a given iterable of password DTO's.
+     * Persists a given iterable of password DTOs.
      * @return list of duplicates that were not re-added
      */
     public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) throws SearchHashGenerationFailureException {
         List<PasswordDTO> out = new LinkedList<>();
-        Set<PasswordEntity> in = new HashSet<>(passwords.size());
+
+        // Linked hash map preserves put order so the first duplicate in input list will be persisted
+        HashMap<String, PasswordEntity> in = new LinkedHashMap<>(passwords.size());
 
         for (PasswordDTO password: passwords) {
             String passwordHash = passwordEncoder.encode(password.getPassword());
             if (passwordRepository.existsByPasswordHash(passwordHash)) {
                 out.add(password);
             } else {
-                boolean unique = in.add(PasswordEntity.builder()
-                        .complexity(password.getComplexity())
-                        .passwordHash(passwordHash)
-                        .searchHash(searchHashGenerator.generateSearchHash(password.getPassword()))
-                        .generationDateTime(password.getGenerationDateTime())
-                        .build());
-
-                if (!unique) out.add(password);
+                if (in.containsKey(password.getPassword())) out.add(password);
+                else {
+                    in.put(password.getPassword(), PasswordEntity.builder()
+                            .complexity(password.getComplexity())
+                            .passwordHash(passwordHash)
+                            .searchHash(searchHashGenerator.generateSearchHash(password.getPassword()))
+                            .generationDateTime(password.getGenerationDateTime())
+                            .build());
+                }
             }
         }
 
-        passwordRepository.saveAll(in);
+        passwordRepository.saveAll(in.values());
         return out;
     }
 
