@@ -6,6 +6,8 @@ import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
 import com.exercise.passgen.models.schemas.*;
 import com.exercise.passgen.services.PasswordService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
@@ -19,16 +21,16 @@ public class PasswordController {
     private final PasswordService passwordService;
 
     @PostMapping("/generate")
-    public PasswordGenerationResponseDTO generatePasswords(@RequestBody PasswordGenerationRequestDTO request)
+    public ResponseEntity<PasswordGenerationResponseDTO> generatePasswords(@RequestBody PasswordGenerationRequestDTO request)
             throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, NoSuchAlgorithmException {
         List<PasswordDTO> passwords = passwordService.generatePasswords(request);
         List<PasswordDTO> duplicates = passwordService.persistUniquePasswords(passwords);
 
-        return PasswordGenerationResponseDTO.builder()
+        return new ResponseEntity<>(PasswordGenerationResponseDTO.builder()
                 .passwords(passwords.stream().map(PasswordDTO::getPassword).collect(Collectors.toList()))
                 .duplicates(duplicates.stream().map(PasswordDTO::getPassword).collect(Collectors.toList()))
                 .complexity(passwords.get(0).getComplexity())
-                .build();
+                .build(), HttpStatus.CREATED);
     }
 
     @PostMapping("/complexity")
