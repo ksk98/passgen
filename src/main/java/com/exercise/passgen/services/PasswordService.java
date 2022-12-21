@@ -218,19 +218,21 @@ public class PasswordService {
      */
     public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) throws NoSuchAlgorithmException {
         List<PasswordDTO> out = new LinkedList<>();
-        List<PasswordEntity> in = new LinkedList<>();
+        Set<PasswordEntity> in = new HashSet<>(passwords.size());
 
         for (PasswordDTO password: passwords) {
             String passwordHash = passwordEncoder.encode(password.getPassword());
             if (passwordRepository.existsByPasswordHash(passwordHash)) {
                 out.add(password);
             } else {
-                in.add(PasswordEntity.builder()
+                boolean unique = in.add(PasswordEntity.builder()
                         .complexity(password.getComplexity())
                         .passwordHash(passwordHash)
                         .searchHash(MD5Digester.getSearchHash(password.getPassword()))
                         .generationDateTime(password.getGenerationDateTime())
                         .build());
+
+                if (!unique) out.add(password);
             }
         }
 
