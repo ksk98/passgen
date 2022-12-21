@@ -10,7 +10,6 @@ import com.exercise.passgen.models.schemas.PasswordGenerationRequestDTO;
 import com.exercise.passgen.repositories.PasswordRepository;
 import com.exercise.passgen.util.MD5Digester;
 import lombok.RequiredArgsConstructor;
-import org.bouncycastle.crypto.digests.MD5Digest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -76,6 +75,15 @@ public class PasswordService {
         return Complexity.LOW;
     }
 
+    /**
+     * Wrapper method for {@link PasswordService#generatePasswords(int, boolean, boolean, boolean, int)}.<br>
+     * <b>THIS METHOD DOES NOT PERSIST THE GENERATED PASSWORDS!</b>
+     * @param request request containing all arguments for {@link PasswordService#generatePasswords(int, boolean, boolean, boolean, int)}
+     * @return list of generated password DTO's
+     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}
+     * @throws NoCaseException when all case flags are false
+     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#MAX_PASSWORDS_AT_ONCE}
+     */
     public List<PasswordDTO> generatePasswords(PasswordGenerationRequestDTO request)
             throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
         return generatePasswords(request.getLength(), request.isLowerCase(), request.isUpperCase(), request.isUpperCase(), request.getAmount());
@@ -158,6 +166,13 @@ public class PasswordService {
         return out;
     }
 
+    /**
+     * Looks for an entity that contains a password hash matching the given password and returns a DTO version of found
+     * entity.
+     * @param password unhashed password string
+     * @return DTO version of entity associated with a given password or null
+     * @throws NoSuchAlgorithmException when MD5 used to compute searchHash is unavailable
+     */
     public PasswordDTO getPasswordDTO(String password) throws NoSuchAlgorithmException {
         List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(MD5Digester.getSearchHash(password));
 
@@ -174,6 +189,12 @@ public class PasswordService {
         return null;
     }
 
+    /**
+     * Deletes an entity associated with a given password and returns its DTO version.
+     * @param password unhashed password string
+     * @return DTO version of entity associated with a given password or null
+     * @throws NoSuchAlgorithmException when MD5 used to compute searchHash is unavailable
+     */
     public PasswordDTO deletePassword(String password) throws NoSuchAlgorithmException {
         List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(MD5Digester.getSearchHash(password));
 
@@ -193,7 +214,7 @@ public class PasswordService {
 
     /**
      * Persists a given iterable of password DTO's.
-     * @return list of duplicates that were not readded
+     * @return list of duplicates that were not re-added
      */
     public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) throws NoSuchAlgorithmException {
         List<PasswordDTO> out = new LinkedList<>();
@@ -217,6 +238,10 @@ public class PasswordService {
         return out;
     }
 
+    /**
+     * Checks if a given length is between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}.
+     * @param length length of a password
+     */
     private void checkLengthBetweenMinMax(int length) throws IncorrectPasswordLengthException {
         if (length < MIN_CHARACTERS || length > MAX_CHARACTERS)
             throw new IncorrectPasswordLengthException("Password length must be between " + MIN_CHARACTERS + " and " + MAX_CHARACTERS + ".");
