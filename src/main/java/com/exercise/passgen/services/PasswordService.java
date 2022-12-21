@@ -8,10 +8,13 @@ import com.exercise.passgen.models.schemas.PasswordDTO;
 import com.exercise.passgen.models.entities.PasswordEntity;
 import com.exercise.passgen.models.schemas.PasswordGenerationRequestDTO;
 import com.exercise.passgen.repositories.PasswordRepository;
+import com.exercise.passgen.util.MD5Digester;
 import lombok.RequiredArgsConstructor;
+import org.bouncycastle.crypto.digests.MD5Digest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -155,37 +158,44 @@ public class PasswordService {
         return out;
     }
 
-    public PasswordDTO getPasswordDTO(String password) {
-        String passwordHash = passwordEncoder.encode(password);
-        if (!passwordRepository.existsByPasswordHash(passwordHash))
-            return null;
+    public PasswordDTO getPasswordDTO(String password) throws NoSuchAlgorithmException {
+        List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(MD5Digester.getSearchHash(password));
 
-        PasswordEntity passwordEntity = passwordRepository.findByPasswordHash(passwordHash);
-        return PasswordDTO.builder()
-                .password(password)
-                .complexity(passwordEntity.getComplexity())
-                .generationDateTime(passwordEntity.getGenerationDateTime())
-                .build();
+        for (PasswordEntity entity: possibleMatches) {
+            if (passwordEncoder.matches(password, entity.getPasswordHash())) {
+                return PasswordDTO.builder()
+                        .password(password)
+                        .complexity(entity.getComplexity())
+                        .generationDateTime(entity.getGenerationDateTime())
+                        .build();
+            }
+        }
+
+        return null;
     }
 
-    public PasswordDTO deletePassword(String password) {
-        String passwordHash = passwordEncoder.encode(password);
-        if (!passwordRepository.existsByPasswordHash(passwordHash))
-            return null;
+    public PasswordDTO deletePassword(String password) throws NoSuchAlgorithmException {
+        List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(MD5Digester.getSearchHash(password));
 
-        PasswordEntity passwordEntity = passwordRepository.deletePasswordByPasswordHash(passwordHash);
-        return PasswordDTO.builder()
-                .password(password)
-                .complexity(passwordEntity.getComplexity())
-                .generationDateTime(passwordEntity.getGenerationDateTime())
-                .build();
+        for (PasswordEntity entity: possibleMatches) {
+            if (passwordEncoder.matches(password, entity.getPasswordHash())) {
+                passwordRepository.delete(entity);
+                return PasswordDTO.builder()
+                        .password(password)
+                        .complexity(entity.getComplexity())
+                        .generationDateTime(entity.getGenerationDateTime())
+                        .build();
+            }
+        }
+
+        return null;
     }
 
     /**
      * Persists a given iterable of password DTO's.
      * @return list of duplicates that were not readded
      */
-    public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) {
+    public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) throws NoSuchAlgorithmException {
         List<PasswordDTO> out = new LinkedList<>();
         List<PasswordEntity> in = new LinkedList<>();
 
@@ -197,6 +207,7 @@ public class PasswordService {
                 in.add(PasswordEntity.builder()
                         .complexity(password.getComplexity())
                         .passwordHash(passwordHash)
+                        .searchHash(MD5Digester.getSearchHash(password.getPassword()))
                         .generationDateTime(password.getGenerationDateTime())
                         .build());
             }

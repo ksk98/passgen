@@ -15,6 +15,7 @@ public class PasswordEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private byte[] searchHash;
     @Column(unique = true)
     private String passwordHash;
     private Complexity complexity;

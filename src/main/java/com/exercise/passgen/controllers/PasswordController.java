@@ -9,6 +9,7 @@ import com.exercise.passgen.services.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,7 +21,7 @@ public class PasswordController {
 
     @PostMapping("/generate")
     public PasswordGenerationResponseDTO generatePasswords(@RequestBody PasswordGenerationRequestDTO request)
-            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, NoSuchAlgorithmException {
         List<PasswordDTO> passwords = passwordService.generatePasswords(request);
         List<PasswordDTO> duplicates = passwordService.persistUniquePasswords(passwords);
 
@@ -33,7 +34,7 @@ public class PasswordController {
 
     @PostMapping("/complexity")
     public PasswordDTO checkComplexity(@RequestBody String password)
-            throws IncorrectPasswordLengthException {
+            throws IncorrectPasswordLengthException, NoSuchAlgorithmException {
         PasswordDTO out = passwordService.getPasswordDTO(password);
 
         if (out == null) {
@@ -49,7 +50,7 @@ public class PasswordController {
 
     @DeleteMapping("")
     public PasswordDTO deletePassword(@RequestBody String password)
-            throws IncorrectPasswordLengthException {
+            throws IncorrectPasswordLengthException, NoSuchAlgorithmException {
         PasswordDTO out = passwordService.deletePassword(password);
 
         if (out == null) {
