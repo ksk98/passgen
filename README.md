@@ -3,7 +3,7 @@
 Here's a brief description on some of the contents.
 
 ## Database
-This application requires a created PostgreSQL database to be available under `jdbc:postgresql://localhost:5432/passgen`. The database is currently set to wipe every 
+This application requires a created PostgreSQL database to be available under `jdbc:postgresql://localhost:5432/passgen` with credentials `postgres`|`s$cret` (as stated in `application.properties`. The database is currently set to wipe every 
 time the application is closed. The application persists password entities with a JPA repository.
 
 ## Password rules and complexity
