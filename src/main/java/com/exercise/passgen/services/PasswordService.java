@@ -2,20 +2,16 @@ package com.exercise.passgen.services;
 
 import com.exercise.passgen.PasswordRules;
 import com.exercise.passgen.enums.Complexity;
-import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
-import com.exercise.passgen.exceptions.NoCaseException;
-import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
-import com.exercise.passgen.exceptions.UndeterminablePasswordComplexityException;
+import com.exercise.passgen.exceptions.*;
 import com.exercise.passgen.models.schemas.PasswordDTO;
 import com.exercise.passgen.models.entities.PasswordEntity;
 import com.exercise.passgen.models.schemas.PasswordGenerationRequestDTO;
 import com.exercise.passgen.repositories.PasswordRepository;
-import com.exercise.passgen.util.MD5Digester;
+import com.exercise.passgen.security.SearchHashGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -31,6 +27,7 @@ public class PasswordService {
 
     private final PasswordRepository passwordRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SearchHashGenerator searchHashGenerator;
 
     /**
      * Returns complexity of a given password.<br>
@@ -165,10 +162,10 @@ public class PasswordService {
      * entity.
      * @param password unhashed password string
      * @return DTO version of entity associated with a given password or null
-     * @throws NoSuchAlgorithmException when MD5 used to compute searchHash is unavailable
+     * @throws SearchHashGenerationFailureException when the generation of a search hash failed
      */
-    public PasswordDTO getPasswordDTO(String password) throws NoSuchAlgorithmException {
-        List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(MD5Digester.getSearchHash(password));
+    public PasswordDTO getPasswordDTO(String password) throws SearchHashGenerationFailureException {
+        List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(searchHashGenerator.generateSearchHash(password));
 
         for (PasswordEntity entity: possibleMatches) {
             if (passwordEncoder.matches(password, entity.getPasswordHash())) {
@@ -187,10 +184,10 @@ public class PasswordService {
      * Deletes an entity associated with a given password and returns its DTO version.
      * @param password unhashed password string
      * @return DTO version of entity associated with a given password or null
-     * @throws NoSuchAlgorithmException when MD5 used to compute searchHash is unavailable
+     * @throws SearchHashGenerationFailureException when MD5 used to compute searchHash is unavailable
      */
-    public PasswordDTO deletePassword(String password) throws NoSuchAlgorithmException {
-        List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(MD5Digester.getSearchHash(password));
+    public PasswordDTO deletePassword(String password) throws SearchHashGenerationFailureException {
+        List<PasswordEntity> possibleMatches = passwordRepository.findAllBySearchHash(searchHashGenerator.generateSearchHash(password));
 
         for (PasswordEntity entity: possibleMatches) {
             if (passwordEncoder.matches(password, entity.getPasswordHash())) {
@@ -210,7 +207,7 @@ public class PasswordService {
      * Persists a given iterable of password DTO's.
      * @return list of duplicates that were not re-added
      */
-    public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) throws NoSuchAlgorithmException {
+    public List<PasswordDTO> persistUniquePasswords(List<PasswordDTO> passwords) throws SearchHashGenerationFailureException {
         List<PasswordDTO> out = new LinkedList<>();
         Set<PasswordEntity> in = new HashSet<>(passwords.size());
 
@@ -222,7 +219,7 @@ public class PasswordService {
                 boolean unique = in.add(PasswordEntity.builder()
                         .complexity(password.getComplexity())
                         .passwordHash(passwordHash)
-                        .searchHash(MD5Digester.getSearchHash(password.getPassword()))
+                        .searchHash(searchHashGenerator.generateSearchHash(password.getPassword()))
                         .generationDateTime(password.getGenerationDateTime())
                         .build());
 
