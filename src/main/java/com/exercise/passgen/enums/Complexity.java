@@ -16,8 +16,8 @@ public enum Complexity {
     public final int MINIMUM_CHARACTERS;
     public final boolean REQUIRES_LOWER_AND_UPPER, REQUIRES_SPECIAL;
 
-    public boolean matchesCriteria(int characters, boolean lowerCase, boolean upperCase, boolean specialCase) {
-        return characters >= MINIMUM_CHARACTERS &&
+    public boolean matchesCriteria(int length, boolean lowerCase, boolean upperCase, boolean specialCase) {
+        return length >= MINIMUM_CHARACTERS &&
                 fulfillsLowerUpper(lowerCase, upperCase) &&
                 fulfillsSpecial(specialCase);
     }
