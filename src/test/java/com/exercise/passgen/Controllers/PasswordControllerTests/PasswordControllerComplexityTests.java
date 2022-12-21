@@ -42,7 +42,18 @@ public class PasswordControllerComplexityTests {
 
     @Test
     public void successfulComplexityChecksWithoutPersistence() throws Exception {
+        // Variable length with lower, upper and special case
+        assertAndGetComplexityCheckResponse("!es7PASSWORD!!222", Complexity.ULTRA);
+        assertAndGetComplexityCheckResponse("!es7PASSWORD!!22", Complexity.HIGH);
+        assertAndGetComplexityCheckResponse("!es7PASS!", Complexity.HIGH);
+        assertAndGetComplexityCheckResponse("!es7PASS", Complexity.MEDIUM);
+        assertAndGetComplexityCheckResponse("!es7PA", Complexity.MEDIUM);
+        assertAndGetComplexityCheckResponse("!es7P", Complexity.LOW);
 
+        // Constant length with varied cases
+        assertAndGetComplexityCheckResponse("tes7PASSWORD11222", Complexity.MEDIUM);
+        assertAndGetComplexityCheckResponse("tes7password!!222", Complexity.LOW);
+        assertAndGetComplexityCheckResponse("tes7password11222", Complexity.LOW);
     }
 
     private void assertSuccessfulGenerationAndComplexityCheck(Complexity complexity, int batchSize) throws Exception {
@@ -50,11 +61,12 @@ public class PasswordControllerComplexityTests {
         PasswordGenerationResponseDTO response = assertAndGetGenerationResponse(request, complexity, batchSize);
 
         for (String password: response.getPasswords()) {
-            assertAndGetComplexityCheckResponse(password, complexity);
+            PasswordDTO responseObject = assertAndGetComplexityCheckResponse(password, complexity);
+            assertNotNull(responseObject.getGenerationDateTime());
         }
     }
 
-    private void assertAndGetComplexityCheckResponse(String password, Complexity complexity) throws Exception {
+    private PasswordDTO assertAndGetComplexityCheckResponse(String password, Complexity complexity) throws Exception {
         // Asserts the:
         // - HTML response code
         // - echoed password
@@ -68,7 +80,8 @@ public class PasswordControllerComplexityTests {
         PasswordDTO responseObject = JSONParser.mapFromJson(response.getResponse().getContentAsString(), PasswordDTO.class);
         assertEquals(password, responseObject.getPassword());
         assertEquals(complexity, responseObject.getComplexity());
-        assertNotNull(responseObject.getGenerationDateTime());
+
+        return responseObject;
     }
 
     private PasswordGenerationRequestDTO generateGenerationRequest(Complexity complexity, int batchSize) {
