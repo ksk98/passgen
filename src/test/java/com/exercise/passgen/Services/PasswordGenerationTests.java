@@ -1,4 +1,4 @@
-package com.exercise.passgen.PasswordService;
+package com.exercise.passgen.Services;
 
 import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;

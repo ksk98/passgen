@@ -1,4 +1,4 @@
-package com.exercise.passgen.PasswordService;
+package com.exercise.passgen.Services;
 
 import com.exercise.passgen.repositories.PasswordRepository;
 import com.exercise.passgen.services.PasswordService;
