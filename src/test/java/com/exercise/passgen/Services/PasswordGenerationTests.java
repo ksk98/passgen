@@ -1,9 +1,11 @@
 package com.exercise.passgen.Services;
 
+import com.exercise.passgen.PasswordRules;
 import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
 import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
+import com.exercise.passgen.exceptions.UndeterminablePasswordComplexityException;
 import com.exercise.passgen.models.schemas.PasswordDTO;
 import com.exercise.passgen.services.PasswordService;
 import org.junit.Test;
@@ -27,30 +29,31 @@ public class PasswordGenerationTests {
         assertThrows(
                 IncorrectPasswordLengthException.class,
                 () -> passwordService.generatePasswords(
-                        PasswordService.MIN_CHARACTERS-1, true, false, false, 1)
+                        PasswordRules.MIN_CHARACTERS-1, true, false, false, 1)
         );
 
         assertThrows(
                 IncorrectPasswordLengthException.class,
                 () -> passwordService.generatePasswords(
-                        PasswordService.MAX_CHARACTERS+1, true, false, false, 1)
+                        PasswordRules.MAX_CHARACTERS+1, true, false, false, 1)
         );
 
         assertThrows(
                 NoCaseException.class,
                 () -> passwordService.generatePasswords(
-                        PasswordService.MIN_CHARACTERS, false, false, false, 1)
+                        PasswordRules.MIN_CHARACTERS, false, false, false, 1)
         );
 
         assertThrows(
                 TooManyPasswordsAtOnceException.class,
                 () -> passwordService.generatePasswords(
-                        PasswordService.MIN_CHARACTERS, true, false, false, PasswordService.MAX_PASSWORDS_AT_ONCE+1)
+                        PasswordRules.MIN_CHARACTERS, true, false, false, PasswordRules.MAX_PASSWORDS_AT_ONCE+1)
         );
     }
 
     @Test
-    public void generateAndValidateUltraComplexity() throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+    public void generateAndValidateUltraComplexity()
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         // 16+ characters
         generateAndAssert(Complexity.ULTRA, 17, true, true, true);
         generateAndAssert(Complexity.HIGH, 16, true, true, true);
@@ -64,7 +67,8 @@ public class PasswordGenerationTests {
     }
 
     @Test
-    public void generateAndValidateHighComplexity() throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+    public void generateAndValidateHighComplexity()
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         // 8+ characters
         generateAndAssert(Complexity.HIGH, 9, true, true, true);
         generateAndAssert(Complexity.MEDIUM, 8, true, true, true);
@@ -78,7 +82,8 @@ public class PasswordGenerationTests {
     }
 
     @Test
-    public void generateAndValidateMediumComplexity() throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+    public void generateAndValidateMediumComplexity()
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         // 5+ characters
         generateAndAssert(Complexity.MEDIUM, 6, true, true, false);
         generateAndAssert(Complexity.LOW, 5, true, true, false);
@@ -92,18 +97,19 @@ public class PasswordGenerationTests {
     }
 
     @Test
-    public void generateAndValidateLowComplexity() throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+    public void generateAndValidateLowComplexity()
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         // Up to 5 characters, but more won't change anything for only lower case or only upper case
-        generateAndAssert(Complexity.LOW, PasswordService.MIN_CHARACTERS, true, false, false);
+        generateAndAssert(Complexity.LOW, PasswordRules.MIN_CHARACTERS, true, false, false);
         generateAndAssert(Complexity.LOW, 5, true, false, false);
 
         // Special case doesn't change anything for this length and character case
-        generateAndAssert(Complexity.LOW, PasswordService.MIN_CHARACTERS, true, false, true);
+        generateAndAssert(Complexity.LOW, PasswordRules.MIN_CHARACTERS, true, false, true);
         generateAndAssert(Complexity.LOW, 5, true, false, true);
     }
 
     private void generateAndAssert(Complexity expected, int length, boolean lowerCase, boolean upperCase, boolean specialCase)
-            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         List<PasswordDTO> passwords = passwordService.generatePasswords(length, lowerCase, upperCase, specialCase, 1);
 
         for (PasswordDTO password: passwords)

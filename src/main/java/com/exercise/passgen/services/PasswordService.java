@@ -1,9 +1,11 @@
 package com.exercise.passgen.services;
 
+import com.exercise.passgen.PasswordRules;
 import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
 import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
+import com.exercise.passgen.exceptions.UndeterminablePasswordComplexityException;
 import com.exercise.passgen.models.schemas.PasswordDTO;
 import com.exercise.passgen.models.entities.PasswordEntity;
 import com.exercise.passgen.models.schemas.PasswordGenerationRequestDTO;
@@ -27,8 +29,6 @@ public class PasswordService {
     private static final char[] UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final char[] SPECIAL = "!@#$%&*()_+-=[]|,./?><".toCharArray();
 
-    public static final int MIN_CHARACTERS = 3, MAX_CHARACTERS = 32, MAX_PASSWORDS_AT_ONCE = 1000;
-
     private final PasswordRepository passwordRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -43,10 +43,10 @@ public class PasswordService {
      * </ul>
      * @param password String value of a given password
      * @return Complexity value
-     * @throws IncorrectPasswordLengthException if length was less than {@value PasswordService#MIN_CHARACTERS}
-     * and more than {@value PasswordService#MAX_CHARACTERS}
+     * @throws IncorrectPasswordLengthException if length was less than {@value PasswordRules#MIN_CHARACTERS}
+     * and more than {@value PasswordRules#MAX_CHARACTERS}
      */
-    public Complexity getComplexity(String password) throws IncorrectPasswordLengthException {
+    public Complexity getComplexity(String password) throws IncorrectPasswordLengthException, UndeterminablePasswordComplexityException {
         int length = password.length();
         checkLengthBetweenMinMax(length);
 
@@ -61,18 +61,12 @@ public class PasswordService {
             } else if (!Character.isDigit(c) && !Character.isSpaceChar(c)) hasSpecialCase = true;
         }
 
-        if (hasLowerCase && hasUpperCase) {
-            if (hasSpecialCase) {
-                if (length > 16) return Complexity.ULTRA;
-                if (length > 8) return Complexity.HIGH;
-            }
-
-            // From my understanding medium complexity passwords do not contain ONLY lower or ONLY upper case
-            // So this still lands inside this IF statement
-            if (length > 5) return Complexity.MEDIUM;
+        for (Complexity complexity: Complexity.class.getEnumConstants()) {
+            if (complexity.matchesCriteria(length, hasLowerCase, hasUpperCase, hasSpecialCase))
+                return complexity;
         }
 
-        return Complexity.LOW;
+        throw new UndeterminablePasswordComplexityException("Could not determine password complexity according to existing complexity rules.");
     }
 
     /**
@@ -80,36 +74,36 @@ public class PasswordService {
      * <b>THIS METHOD DOES NOT PERSIST THE GENERATED PASSWORDS!</b>
      * @param request request containing all arguments for {@link PasswordService#generatePasswords(int, boolean, boolean, boolean, int)}
      * @return list of generated password DTO's
-     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}
+     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordRules#MIN_CHARACTERS} and {@value PasswordRules#MAX_CHARACTERS}
      * @throws NoCaseException when all case flags are false
-     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#MAX_PASSWORDS_AT_ONCE}
+     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordRules#MAX_PASSWORDS_AT_ONCE}
      */
     public List<PasswordDTO> generatePasswords(PasswordGenerationRequestDTO request)
-            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         return generatePasswords(request.getLength(), request.isLowerCase(), request.isUpperCase(), request.isUpperCase(), request.getAmount());
     }
 
     /**
      * Generates a batch of password DTO's packed in a list.<br><b>THIS METHOD DOES NOT PERSIST THE GENERATED PASSWORDS!</b>
-     * @param length length of generated passwords, (between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS})
+     * @param length length of generated passwords, (between {@value PasswordRules#MIN_CHARACTERS} and {@value PasswordRules#MAX_CHARACTERS})
      * @param lowerCase if true, passwords will contain lowercase letters
      * @param upperCase if true, passwords will contain uppercase letters
      * @param specialCase if true, passwords will contain special characters
-     * @param amount amount of generated passwords (max {@value PasswordService#MAX_PASSWORDS_AT_ONCE})
+     * @param amount amount of generated passwords (max {@value PasswordRules#MAX_PASSWORDS_AT_ONCE})
      * @return list of generated password DTO's
-     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}
+     * @throws IncorrectPasswordLengthException when length is not between {@value PasswordRules#MIN_CHARACTERS} and {@value PasswordRules#MAX_CHARACTERS}
      * @throws NoCaseException when all case flags are false
-     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordService#MAX_PASSWORDS_AT_ONCE}
+     * @throws TooManyPasswordsAtOnceException when amount exceeds {@value PasswordRules#MAX_PASSWORDS_AT_ONCE}
      */
     public List<PasswordDTO> generatePasswords(int length, boolean lowerCase, boolean upperCase, boolean specialCase, int amount)
-            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException {
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, UndeterminablePasswordComplexityException {
         checkLengthBetweenMinMax(length);
 
         if (!lowerCase && !upperCase && !specialCase)
             throw new NoCaseException("At least one case must be selected.");
 
-        if (amount > MAX_PASSWORDS_AT_ONCE)
-            throw new TooManyPasswordsAtOnceException("Cannot request more than " + MAX_PASSWORDS_AT_ONCE + " to be generated at once.");
+        if (amount > PasswordRules.MAX_PASSWORDS_AT_ONCE)
+            throw new TooManyPasswordsAtOnceException("Cannot request more than " + PasswordRules.MAX_PASSWORDS_AT_ONCE + " to be generated at once.");
 
         List<PasswordDTO> out = new ArrayList<>(amount);
 
@@ -241,11 +235,12 @@ public class PasswordService {
     }
 
     /**
-     * Checks if a given length is between {@value PasswordService#MIN_CHARACTERS} and {@value PasswordService#MAX_CHARACTERS}.
+     * Checks if a given length is between {@value PasswordRules#MIN_CHARACTERS} and {@value PasswordRules#MAX_CHARACTERS}.
      * @param length length of a password
      */
     private void checkLengthBetweenMinMax(int length) throws IncorrectPasswordLengthException {
-        if (length < MIN_CHARACTERS || length > MAX_CHARACTERS)
-            throw new IncorrectPasswordLengthException("Password length must be between " + MIN_CHARACTERS + " and " + MAX_CHARACTERS + ".");
+        if (length < PasswordRules.MIN_CHARACTERS || length > PasswordRules.MAX_CHARACTERS)
+            throw new IncorrectPasswordLengthException("Password length must be between " +
+                    PasswordRules.MIN_CHARACTERS + " and " + PasswordRules.MAX_CHARACTERS + ".");
     }
 }

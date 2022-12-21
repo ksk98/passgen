@@ -2,6 +2,7 @@ package com.exercise.passgen.Services;
 
 import com.exercise.passgen.enums.Complexity;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
+import com.exercise.passgen.exceptions.UndeterminablePasswordComplexityException;
 import com.exercise.passgen.services.PasswordService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,7 +17,7 @@ public class PasswordValidationTests {
     PasswordService passwordService;
 
     @Test
-    public void validateUltraComplexity() throws IncorrectPasswordLengthException {
+    public void validateUltraComplexity() throws IncorrectPasswordLengthException, UndeterminablePasswordComplexityException {
         // 16+ characters
         assertEquals(Complexity.ULTRA, passwordService.getComplexity("$AaAa$AaAa$AaAa$AaAa"));
         assertEquals(Complexity.HIGH, passwordService.getComplexity("$AaAa$AaAa$AaAa$"));
@@ -30,7 +31,7 @@ public class PasswordValidationTests {
     }
 
     @Test
-    public void validateHighComplexity() throws IncorrectPasswordLengthException {
+    public void validateHighComplexity() throws IncorrectPasswordLengthException, UndeterminablePasswordComplexityException {
         // 8+ characters
         assertEquals(Complexity.HIGH, passwordService.getComplexity("$AaAa$AaAa"));
         assertEquals(Complexity.MEDIUM, passwordService.getComplexity("$AaAa$A"));
@@ -44,7 +45,7 @@ public class PasswordValidationTests {
     }
 
     @Test
-    public void validateMediumComplexity() throws IncorrectPasswordLengthException {
+    public void validateMediumComplexity() throws IncorrectPasswordLengthException, UndeterminablePasswordComplexityException {
         // 5+ characters
         assertEquals(Complexity.MEDIUM, passwordService.getComplexity("SAaAaS"));
         assertEquals(Complexity.LOW, passwordService.getComplexity("SAaAa"));
@@ -58,7 +59,7 @@ public class PasswordValidationTests {
     }
 
     @Test
-    public void validateLowComplexity() throws IncorrectPasswordLengthException {
+    public void validateLowComplexity() throws IncorrectPasswordLengthException, UndeterminablePasswordComplexityException {
         // Up to 5 characters, but more won't change anything for only lower case or only upper case
         assertEquals(Complexity.LOW, passwordService.getComplexity("saaa"));
         assertEquals(Complexity.LOW, passwordService.getComplexity("saaaa"));

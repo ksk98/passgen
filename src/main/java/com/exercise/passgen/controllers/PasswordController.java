@@ -3,6 +3,7 @@ package com.exercise.passgen.controllers;
 import com.exercise.passgen.exceptions.IncorrectPasswordLengthException;
 import com.exercise.passgen.exceptions.NoCaseException;
 import com.exercise.passgen.exceptions.TooManyPasswordsAtOnceException;
+import com.exercise.passgen.exceptions.UndeterminablePasswordComplexityException;
 import com.exercise.passgen.models.schemas.*;
 import com.exercise.passgen.services.PasswordService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,8 @@ public class PasswordController {
 
     @PostMapping("/generate")
     public ResponseEntity<PasswordGenerationResponseDTO> generatePasswords(@RequestBody PasswordGenerationRequestDTO request)
-            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, NoSuchAlgorithmException {
+            throws IncorrectPasswordLengthException, NoCaseException, TooManyPasswordsAtOnceException, NoSuchAlgorithmException,
+            UndeterminablePasswordComplexityException {
         List<PasswordDTO> passwords = passwordService.generatePasswords(request);
         List<PasswordDTO> duplicates = passwordService.persistUniquePasswords(passwords);
 
@@ -35,7 +37,7 @@ public class PasswordController {
 
     @PostMapping("/complexity")
     public PasswordDTO checkComplexity(@RequestBody String password)
-            throws IncorrectPasswordLengthException, NoSuchAlgorithmException {
+            throws IncorrectPasswordLengthException, NoSuchAlgorithmException, UndeterminablePasswordComplexityException {
         PasswordDTO out = passwordService.getPasswordDTO(password);
 
         if (out == null) {
@@ -51,7 +53,7 @@ public class PasswordController {
 
     @DeleteMapping("")
     public PasswordDTO deletePassword(@RequestBody String password)
-            throws IncorrectPasswordLengthException, NoSuchAlgorithmException {
+            throws IncorrectPasswordLengthException, NoSuchAlgorithmException, UndeterminablePasswordComplexityException {
         PasswordDTO out = passwordService.deletePassword(password);
 
         if (out == null) {
